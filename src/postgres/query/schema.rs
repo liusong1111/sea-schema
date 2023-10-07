@@ -15,6 +15,7 @@ pub enum InformationSchema {
     Tables,
     TableConstraints,
     ConstraintColumnUsage,
+    TableName,
 }
 
 pub(crate) fn select_base_table_and_view() -> SelectStatement {

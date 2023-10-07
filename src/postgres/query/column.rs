@@ -67,6 +67,7 @@ pub struct ColumnQueryResult {
 
     pub udt_name: Option<String>,
     pub udt_name_regtype: Option<String>,
+    pub comment: Option<String>,
 }
 
 impl SchemaQueryBuilder {
@@ -75,7 +76,16 @@ impl SchemaQueryBuilder {
         schema: SeaRc<dyn Iden>,
         table: SeaRc<dyn Iden>,
     ) -> SelectStatement {
-        Query::select()
+        #[derive(Debug, Iden)]
+        enum PgClass {
+            #[iden = "pg_catalog"]
+            Schema,
+            Table,
+            Relname,
+            Relkind,
+            Oid,
+        }
+        let ret = Query::select()
             .columns([
                 ColumnsField::ColumnName,
                 ColumnsField::DataType,
@@ -99,10 +109,28 @@ impl SchemaQueryBuilder {
                 Expr::expr(Expr::cust("CONCAT('\"', udt_name, '\"')::regtype").cast_as(Text))
                     .binary(BinOper::As, Expr::col(UdtNameRegtype)),
             )
+            .expr(Expr::expr(
+                Expr::cust("pg_catalog.col_description(pg_catalog.pg_class.oid, information_schema.columns.ordinal_position::int)")
+                    .cast_as(Text),
+            ))
             .from((InformationSchema::Schema, InformationSchema::Columns))
+            .left_join(
+                (PgClass::Schema, PgClass::Table),
+                Expr::col((
+                    InformationSchema::Schema,
+                    InformationSchema::Columns,
+                    InformationSchema::TableName,
+                ))
+                .eq(Expr::col((
+                    PgClass::Schema,
+                    PgClass::Table,
+                    PgClass::Relname,
+                ))),
+            )
             .and_where(Expr::col(ColumnsField::TableSchema).eq(schema.to_string()))
             .and_where(Expr::col(ColumnsField::TableName).eq(table.to_string()))
-            .take()
+            .take();
+        ret
     }
 }
 
@@ -127,6 +155,7 @@ impl From<&PgRow> for ColumnQueryResult {
             interval_precision: row.get(13),
             udt_name: row.get(14),
             udt_name_regtype: row.get(15),
+            comment: row.get(16),
         }
     }
 }

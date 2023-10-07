@@ -29,7 +29,7 @@ pub struct ColumnInfo {
 
     // FIXME: Include if there's a convenient way to look for this
     // /// Comments on the column made by the user
-    // pub comment: String,
+    pub comment: Option<String>,
 }
 
 pub type ColumnType = Type;

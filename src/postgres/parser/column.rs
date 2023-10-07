@@ -17,6 +17,7 @@ pub fn parse_column_query_result(result: ColumnQueryResult, enums: &EnumVariantM
         generated: ColumnExpression::from_option_string(result.column_generated),
         not_null: NotNull::from_bool(!yes_or_no_to_bool(&result.is_nullable)),
         is_identity: yes_or_no_to_bool(&result.is_identity),
+        comment: result.comment.clone(),
     }
 }
 
