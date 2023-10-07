@@ -33,6 +33,7 @@ pub struct TableQueryResult {
     pub table_name: String,
     pub user_defined_type_schema: Option<String>,
     pub user_defined_type_name: Option<String>,
+    pub comment: Option<String>,
 }
 
 impl SchemaQueryBuilder {
@@ -43,6 +44,9 @@ impl SchemaQueryBuilder {
                 TablesFields::UserDefinedTypeSchema,
                 TablesFields::UserDefinedTypeName,
             ])
+            .expr(Expr::expr(Expr::cust(
+                "obj_description(concat(table_schema, '.', table_name)::regclass)",
+            )))
             .from((InformationSchema::Schema, InformationSchema::Tables))
             .and_where(Expr::col(TablesFields::TableSchema).eq(schema.to_string()))
             .and_where(Expr::col(TablesFields::TableType).eq(TableType::BaseTable.to_string()))
@@ -61,6 +65,7 @@ impl From<&PgRow> for TableQueryResult {
             table_name: row.get(0),
             user_defined_type_schema: row.get(1),
             user_defined_type_name: row.get(2),
+            comment: row.get(3),
         }
     }
 }

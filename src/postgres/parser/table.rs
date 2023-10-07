@@ -13,5 +13,6 @@ pub fn parse_table_query_result(table_query: TableQueryResult) -> TableInfo {
         of_type: table_query
             .user_defined_type_name
             .map(|type_name| Type::from_str(&type_name, Some(&type_name), false)),
+        comment: table_query.comment,
     }
 }
